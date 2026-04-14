@@ -5,7 +5,8 @@ import {
   editTransaction,
 } from "../features/transaction/transactionSlice";
 import useFetchExpenses from "../hooks/useFetchExpenses";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import PageHeader from "./PageHeader";
 
 function AddTransaction() {
   const categories = useSelector((state) => state.category.list);
@@ -53,26 +54,27 @@ function AddTransaction() {
 
   const handleInputChange = (e) => {
     let inputNam = e.target.name;
-    let inputVal = e.target.value.trim();
+    let inputVal = e.target.value;
 
     if (inputNam === "type") {
       let list = categories.filter((item) => item.type === inputVal);
-      console.log(list);
       setCategoryList(list);
     }
+    if (inputNam === "amount")
+      inputVal = inputVal === "" ? "" : Number(inputVal);
 
-    if (inputNam === "amount") inputVal = Number(inputVal);
-    if (inputVal === "") {
-      setError("Please fill all fields");
-    } else {
-      setInputValues((prev) => ({ ...prev, [inputNam]: inputVal }));
+    setInputValues((prev) => ({ ...prev, [inputNam]: inputVal }));
+
+    if (inputVal !== "") {
       setError("");
+    } else {
+      setError("Please fill all fields");
     }
   };
 
   const resetFields = () => {
     setInputValues({
-      amount: 0,
+      amount: "",
       type: "",
       category: "",
       date: "",
@@ -80,10 +82,39 @@ function AddTransaction() {
     });
   };
 
-  const saveTransaction = () => {};
+  const saveDetails = () => {
+    const isFormInputEmpty = Object.values(inputValues).some(
+      (item) => !item || (typeof item === "string" && item.trim() === "")
+    );
+    if (isFormInputEmpty) {
+      setError("Please fill all the fields");
+    } else {
+      setError("");
+
+      if (params.id) {
+        dispatch(editTransaction({ id: params.id, ...inputValues }));
+      } else {
+        dispatch(addTransaction(inputValues));
+      }
+
+      navigate("/transactions/list");
+    }
+  };
 
   return (
     <section className="space-y-6">
+      <PageHeader
+        heading="Record new entry"
+        subHeading="Transaction"
+        image="transfer.png"
+      >
+        <p className="mt-1 text-sm text-slate-600">
+          Add a new income or expense to keep your records updated.
+          <br />
+          Maintain accurate and organized financial data.
+        </p>
+      </PageHeader>
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="text-sm text-slate-600">Salary</div>
@@ -198,10 +229,18 @@ function AddTransaction() {
                     categoryList.length > 0 &&
                     categoryList.map((category) => (
                       <option key={category.id} value={category.name}>
-                        {category.name}
+                        {category.icon}&nbsp; {category.name}
                       </option>
                     ))}
                 </select>
+                <p className="text-xs my-1">
+                  Category not found?
+                  <Link to="/categories" className="font-medium text-pink-700">
+                    <span>+</span>
+                    <span>Add</span>
+                  </Link>
+                  ”
+                </p>
               </div>
             </div>
             <div>
@@ -223,24 +262,18 @@ function AddTransaction() {
                 required
               />
             </div>
-
+            {error && (
+              <p className="text-rose-500 text-xs font-bold"> {error}</p>
+            )}
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={
-                  params.id
-                    ? () => {
-                        dispatch(
-                          editTransaction({ id: params.id, ...inputValues })
-                        );
-                        navigate("/transactions/list");
-                      }
-                    : () => {
-                        dispatch(addTransaction(inputValues));
-                        navigate("/transactions/list");
-                      }
-                }
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-pink-700 px-4 text-sm font-medium text-white shadow-sm hover:bg-pink-600"
+                onClick={saveDetails}
+                className={`inline-flex h-10 items-center justify-center rounded-xl px-4 text-sm font-medium text-white shadow-sm ${
+                  error
+                    ? "cursor-not-allowed bg-gray-300"
+                    : "bg-pink-700   hover:bg-pink-600 cursor-pointer"
+                }`}
               >
                 Save
               </button>
@@ -258,5 +291,4 @@ function AddTransaction() {
     </section>
   );
 }
-
 export default AddTransaction;

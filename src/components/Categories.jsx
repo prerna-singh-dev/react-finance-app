@@ -5,6 +5,7 @@ import {
   deleteCategory,
 } from "../features/category/categorySlice";
 import EmojiTab from "./EmojiTab";
+import PageHeader from "./PageHeader";
 
 function Categories() {
   const categories = useSelector((state) => state.category.list);
@@ -22,7 +23,7 @@ function Categories() {
   const handleInputChange = (e) => {
     const inputNam = e.target.name;
     const inputVal = e.target.value.trim();
-    checkValidation();
+    //checkValidation();
     setInputValues((prev) => ({ ...prev, [inputNam]: inputVal }));
   };
 
@@ -50,7 +51,7 @@ function Categories() {
   };
 
   const saveCategory = () => {
-    checkValidation();
+    //checkValidation();
     if (error) return;
     dispatch(addCategory(inputValues));
     resetFields();
@@ -58,21 +59,17 @@ function Categories() {
 
   return (
     <section className="space-y-6">
-      <header
-        className="flex flex-col gap-3 rounded-2xl border border-slate-200
-       bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+      <PageHeader
+        heading="Add and manage categories"
+        subHeading="Categories"
+        image="categories.png"
       >
-        <div>
-          <h1 className="mt-1 text-xl font-semibold text-slate-900">
-            Categories
-          </h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Categories help you understand your spending patterns at a glance.
-            Create, edit, or manage categories to get better insights into your
-            financial habits.
-          </p>
-        </div>
-      </header>
+        <p className="mt-1 text-sm text-slate-600">
+          Create new categories and view existing ones in one place.
+          <br />
+          Organize your transactions for better financial tracking.
+        </p>
+      </PageHeader>
 
       <ul className="grid gap-3 sm:grid-cols-4 lg:grid-cols-6">
         {categories &&
@@ -162,7 +159,7 @@ function Categories() {
               type="button"
               className={`inline-flex h-10 items-center justify-center rounded-xl px-4 text-sm font-medium
                  text-white shadow-sm ${
-                   error
+                   error !== ""
                      ? "cursor-not-allowed bg-gray-300"
                      : "bg-pink-700  hover:bg-pink-600"
                  }`}

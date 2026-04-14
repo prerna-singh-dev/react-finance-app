@@ -92,7 +92,7 @@ function Sidebar() {
           </div>
           <ul className="mt-3 space-y-2 text-sm">
             <li className="flex items-center justify-between">
-              <span className="text-slate-600">Salary</span>
+              <span className="text-slate-600">Income</span>
               <span className="font-semibold text-slate-900">
                 &#8377;{salary ? salary : 0}
               </span>
@@ -104,7 +104,7 @@ function Sidebar() {
               </span>
             </li>
             <li className="flex items-center justify-between">
-              <span className="text-slate-600">Saved</span>
+              <span className="text-slate-600">Balance</span>
               <span className="font-semibold text-emerald-600">
                 &#8377;{balance ? balance : 0}
               </span>

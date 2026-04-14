@@ -1,7 +1,7 @@
 import { createSlice, nanoid } from "@reduxjs/toolkit";
 
 const initialState = {
-  list: [
+  list: JSON.parse(sessionStorage.getItem("categories")) || [
     {
       id: nanoid(),
       name: "Travel",
@@ -52,10 +52,11 @@ const categorySlice = createSlice({
         icon: action.payload.icon,
         type: action.payload.type,
       });
+      sessionStorage.setItem("categories", JSON.stringify(state.list));
     },
     deleteCategory: (state, action) => {
       state.list = state.list.filter((categ) => categ.id !== action.payload);
-      // sessionStorage.setItem("transactions", JSON.stringify(state.list));
+      sessionStorage.setItem("categories", JSON.stringify(state.list));
     },
   },
 });

@@ -8,7 +8,7 @@ function EmojiTab({ emojiChange }) {
 
   return (
     <>
-      <div className="">
+      <div>
         <ul className="flex bg-pink-100">
           {Object.entries(emojis).map((emoji) => (
             <li
@@ -33,7 +33,7 @@ function EmojiTab({ emojiChange }) {
               {emoji[1].map((emoji) => (
                 <button
                   key={emoji}
-                  className="text-3xl px-3 py-1.5 mx-1 focus:border focus:border-gray-200  hover:bg-gray-100"
+                  className="text-3xl px-3 py-1.5 mx-1 focus:border hover:border-gray-200  focus:bg-gray-100  focus:border-gray-200"
                   onClick={() => emojiChange(emoji)}
                 >
                   {emoji}

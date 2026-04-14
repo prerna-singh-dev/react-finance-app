@@ -11,5 +11,11 @@
 
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
+    position: relative;
   }
+}
+/* Custom radio button */
+.customField input:checked + span {
+  background-color: #be185d;
+  color: white;
 }
