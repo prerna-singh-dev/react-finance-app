@@ -9,7 +9,12 @@ function PageHeader({ subHeading, heading, image, children }) {
         {children}
       </div>
       <div className="absolute top-2 right-2">
-        <img src={image} alt="" className="w-12 h-auto inline-block" />
+        <img
+          src={image}
+          alt=""
+          className="w-12 h-auto inline-block"
+          aria-hidden="true"
+        />
       </div>
     </header>
   );

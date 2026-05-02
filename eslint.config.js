@@ -26,4 +26,12 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    files: ['src/main.jsx'],
+    rules: {
+      // Vite entry files commonly create the root without exporting a component;
+      // react-refresh's "only-export-components" rule is noisy here.
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

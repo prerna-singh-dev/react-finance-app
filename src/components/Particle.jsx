@@ -28,7 +28,7 @@ export default function Particle() {
     function animate() {
       //  background
 
-      ctx.fillStyle = "#0f172a";
+      ctx.fillStyle = "#6e0e36";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // draw particles
@@ -60,7 +60,7 @@ export default function Particle() {
           if (dist < 100) {
             ctx.beginPath();
             ctx.strokeStyle = `rgba(255,255,255,${1 - dist / 100})`;
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 2;
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
             ctx.stroke();
@@ -83,6 +83,7 @@ export default function Particle() {
   return (
     <canvas
       ref={canvasRef}
+      className="hidden lg:block"
       style={{
         position: "fixed",
         top: 0,

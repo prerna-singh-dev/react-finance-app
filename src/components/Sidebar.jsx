@@ -1,33 +1,44 @@
 import useFetchExpenses from "../hooks/useFetchExpenses";
 import { NavLink, Link } from "react-router";
+import { useLocation } from "react-router-dom";
 function Sidebar() {
   const [salary, expense, balance] = useFetchExpenses();
 
+  const { pathname } = useLocation();
+
+  const focusRing =
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-700 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
+
   return (
     <>
-      <aside className="hidden w-64 shrink-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:block">
+      <aside className="w-64 shrink-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-pink-700 text-sm font-semibold text-white">
-            RF
+            <Link to="/" className={focusRing}>
+              RF
+            </Link>
           </div>
           <div className="leading-tight">
             <div className="text-sm font-semibold text-slate-900">
-              React Finance
+              <Link to="/" className={focusRing}>
+                React Finance
+              </Link>
             </div>
             <div className="text-xs text-slate-500">Tracker</div>
           </div>
         </div>
 
-        <nav>
+        <nav aria-label="Sidebar navigation">
           <ul className="mt-6 space-y-2 text-sm list-none">
             <li className="font-medium">
               <NavLink
                 className={({ isActive }) =>
                   isActive
-                    ? "bg-pink-700  text-white rounded-xl px-3 py-2 block  hover:bg-pink-800"
-                    : "text-slate-900 rounded-xl px-3 py-2 block  hover:bg-slate-100"
+                    ? `bg-pink-700 text-white rounded-xl px-3 py-2 block hover:bg-pink-800 ${focusRing}`
+                    : `text-slate-900 rounded-xl px-3 py-2 block hover:bg-slate-100 ${focusRing}`
                 }
                 to="/"
+                aria-current={pathname === "/" ? "page" : undefined}
               >
                 Dashboard
               </NavLink>
@@ -37,10 +48,11 @@ function Sidebar() {
               <NavLink
                 className={({ isActive }) =>
                   isActive
-                    ? "bg-pink-700  text-white rounded-xl px-3 py-2 block  hover:bg-pink-800"
-                    : "text-slate-900 rounded-xl px-3 py-2 block  hover:bg-slate-100"
+                    ? `bg-pink-700 text-white rounded-xl px-3 py-2 block hover:bg-pink-800 ${focusRing}`
+                    : `text-slate-900 rounded-xl px-3 py-2 block hover:bg-slate-100 ${focusRing}`
                 }
                 to="/transactions"
+                aria-current={pathname === "/transactions" ? "page" : undefined}
               >
                 Transactions
               </NavLink>
@@ -49,10 +61,13 @@ function Sidebar() {
                   <NavLink
                     className={({ isActive }) =>
                       isActive
-                        ? "bg-pink-700  text-white rounded-xl px-3 py-2 block  hover:bg-pink-800"
-                        : "text-slate-900 rounded-xl px-3 py-2 block  hover:bg-slate-100"
+                        ? `bg-pink-700 text-white rounded-xl px-3 py-2 block hover:bg-pink-800 ${focusRing}`
+                        : `text-slate-900 rounded-xl px-3 py-2 block hover:bg-slate-100 ${focusRing}`
                     }
                     to="/transactions/list"
+                    aria-current={
+                      pathname === "/transactions/list" ? "page" : undefined
+                    }
                   >
                     All Transactions
                   </NavLink>
@@ -61,10 +76,13 @@ function Sidebar() {
                   <NavLink
                     className={({ isActive }) =>
                       isActive
-                        ? "bg-pink-700  text-white rounded-xl px-3 py-2 block  hover:bg-pink-800"
-                        : "text-slate-900 rounded-xl px-3 py-2 block  hover:bg-slate-100"
+                        ? `bg-pink-700 text-white rounded-xl px-3 py-2 block hover:bg-pink-800 ${focusRing}`
+                        : `text-slate-900 rounded-xl px-3 py-2 block hover:bg-slate-100 ${focusRing}`
                     }
                     to="/transactions/add"
+                    aria-current={
+                      pathname === "/transactions/add" ? "page" : undefined
+                    }
                   >
                     Log Transaction
                   </NavLink>
@@ -75,8 +93,8 @@ function Sidebar() {
               <NavLink
                 className={({ isActive }) =>
                   isActive
-                    ? "bg-pink-700  text-white rounded-xl px-3 py-2 block  hover:bg-pink-800"
-                    : "text-slate-900 rounded-xl px-3 py-2 block  hover:bg-slate-100"
+                    ? `bg-pink-700 text-white rounded-xl px-3 py-2 block hover:bg-pink-800 ${focusRing}`
+                    : `text-slate-900 rounded-xl px-3 py-2 block hover:bg-slate-100 ${focusRing}`
                 }
                 to="/categories"
               >

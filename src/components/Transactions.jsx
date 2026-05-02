@@ -1,16 +1,109 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { deleteTransaction } from "../features/transaction/transactionSlice";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState, useRef } from "react";
 import Filters from "./Filters";
 import GlobalModal from "./GlobalModal";
 import PageHeader from "./PageHeader";
 
+function sortTransactionList(list, sortOrder) {
+  if (sortOrder === "asc") {
+    return [...list].sort((a, b) => new Date(a.date) - new Date(b.date));
+  }
+  if (sortOrder === "desc") {
+    return [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }
+  return list;
+}
+
+function toYMD(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function filterTransactionList(list, filterOptions) {
+  const noType =
+    filterOptions.type === null ||
+    filterOptions.type === undefined ||
+    filterOptions.type === "";
+
+  const minNum = Number(filterOptions.minAmount);
+  const maxNum = Number(filterOptions.maxAmount);
+  const noMin =
+    filterOptions.minAmount === null ||
+    filterOptions.minAmount === undefined ||
+    filterOptions.minAmount === "" ||
+    Number.isNaN(minNum);
+  const noMax =
+    filterOptions.maxAmount === null ||
+    filterOptions.maxAmount === undefined ||
+    filterOptions.maxAmount === "" ||
+    Number.isNaN(maxNum);
+
+  const todayDate = new Date();
+  let endDate = null;
+  let startDate = null;
+
+  if (filterOptions.date === "Last 7 Days") {
+    endDate = new Date(todayDate);
+    startDate = new Date(todayDate);
+    startDate.setDate(startDate.getDate() - 7);
+  } else if (filterOptions.date === "Last Month") {
+    endDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), 0);
+    startDate = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+  } else if (filterOptions.date === "This Month") {
+    endDate = new Date(todayDate);
+    startDate = new Date(todayDate);
+    startDate.setDate(1);
+  }
+
+  const startYMD = startDate ? toYMD(startDate) : "";
+  const endYMD = endDate ? toYMD(endDate) : "";
+
+  const noDate =
+    filterOptions.date === null ||
+    filterOptions.date === undefined ||
+    filterOptions.date === "" ||
+    filterOptions.date === "All";
+
+  return list.filter((item) => {
+    return (
+      (noType || item.type === filterOptions.type) &&
+      (filterOptions.category.length === 0 ||
+        filterOptions.category.includes(item.category)) &&
+      (noMin || Number(item.amount) >= minNum) &&
+      (noMax || Number(item.amount) <= maxNum) &&
+      (noDate || (item.date >= startYMD && item.date <= endYMD))
+    );
+  });
+}
+
 function Transactions() {
   const transactionData = useSelector((state) => state.transaction.list);
   const filters = useSelector((state) => state.filters.options);
+  const sortMenuId = useId();
+  const sortMenuRef = useRef(null);
 
-  const [transactions, setTransactions] = useState(transactionData);
+  const isFilterExist = (filterOptions) => {
+    return Object.values(filterOptions).some((item) => {
+      if (
+        (Array.isArray(item) && item.length === 0) ||
+        (typeof item === "string" && item.trim() === "")
+      )
+        return false;
+      return item !== null && item !== undefined;
+    });
+  };
+
+  const isAnyFilter = isFilterExist(filters);
+
+  const [transactions, setTransactions] = useState(() => {
+    const base = Array.isArray(transactionData) ? transactionData : [];
+    const filtered = isAnyFilter ? filterTransactionList(base, filters) : base;
+    return sortTransactionList(filtered, "desc");
+  });
   const [toggleSortMenu, setToggleSortMenu] = useState(false);
   const [toggleFilterMenu, setToggleFilterMenu] = useState(false);
 
@@ -20,70 +113,48 @@ function Transactions() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    sort("desc");
-  }, []);
-
-  const isFilterExist = () => {
-    const isAnyFilter = Object.values(filters).some((item) => {
-      if (
-        (Array.isArray(item) && item.length === 0) ||
-        (typeof item === "string" && item.trim() === "")
-      )
-        return false;
-      else return true;
-    });
-    return isAnyFilter;
-  };
-
-  const isAnyFilter = isFilterExist();
+    if (!toggleSortMenu) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setToggleSortMenu(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [toggleSortMenu]);
 
   useEffect(() => {
-    if (isAnyFilter) applyFilters();
-  }, []);
-
-  const sort = (sortOrder) => {
-    let sortedTransactions = [];
-    if (sortOrder === "asc") {
-      sortedTransactions = [...transactions].sort(
-        (a, b) => new Date(a.date) - new Date(b.date)
-      );
-    } else if (sortOrder === "desc") {
-      sortedTransactions = [...transactions].sort(
-        (a, b) => new Date(b.date) - new Date(a.date)
-      );
+    if (!toggleSortMenu) return;
+    function handleClickOutside(event) {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
+        setToggleSortMenu(false);
+      }
     }
-    setTransactions(sortedTransactions);
-  };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [toggleSortMenu]);
 
-  const applyFilters = () => {
-    console.log("Inside apply filters");
+  const applyFilters = (filterOptions = filters) => {
     setShowLoading(true);
 
-    let filteredTransaction = [];
-    filteredTransaction = transactionData.filter((item) => {
-      return (
-        (!filters.type || item.type === filters.type) &&
-        (filters.category.length === 0 ||
-          filters.category.includes(item.category)) &&
-        (filters.minAmount === null || item.amount >= filters.minAmount) &&
-        (filters.maxAmount === null || item.amount <= filters.maxAmount)
-      );
-    });
+    const base = Array.isArray(transactionData) ? transactionData : [];
+    const filteredTransaction = filterTransactionList(base, filterOptions);
 
-    console.log(filteredTransaction);
-
-    setTransactions(filteredTransaction);
+    setTransactions(sortTransactionList(filteredTransaction, "desc"));
     setShowLoading(false);
     setToggleFilterMenu(false);
   };
 
+  const sort = (sortOrder) => {
+    setTransactions((prev) => sortTransactionList(prev, sortOrder));
+    setToggleSortMenu(false);
+  };
+
   const resetFilters = () => {
-    setTransactions(transactionData);
+    setTransactions(sortTransactionList(transactionData, "desc"));
     setToggleFilterMenu(false);
   };
 
   const deleteTransactions = () => {
-    setTransactions(transactionData);
+    setTransactions(sortTransactionList(transactionData, "desc"));
   };
 
   return (
@@ -107,7 +178,6 @@ function Transactions() {
               <div className="text-base font-semibold text-slate-900">
                 Recent transactions
               </div>
-              <div className="mt-1 text-xs text-slate-500">some lines</div>
             </div>
             {(transactions || isAnyFilter) && (
               <div className="flex items-center gap-2 relative">
@@ -132,54 +202,64 @@ function Transactions() {
                     />
                   </svg>
                 </button>
-                <button
-                  aria-label="Sort Transactions"
-                  title="Sort"
-                  className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 relative"
-                  onClick={() => setToggleSortMenu((prev) => !prev)}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                <div ref={sortMenuRef}>
+                  <button
+                    aria-label="Sort Transactions"
+                    title="Sort"
+                    aria-haspopup="menu"
+                    aria-expanded={toggleSortMenu}
+                    aria-controls={toggleSortMenu ? sortMenuId : undefined}
+                    className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 relative"
+                    onClick={() => setToggleSortMenu((prev) => !prev)}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M8 17V7m0 0l-3 3m3-3l3 3"
-                    />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M8 17V7m0 0l-3 3m3-3l3 3"
+                      />
 
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M16 7v10m0 0l3-3m-3 3l-3-3"
-                    />
-                  </svg>
-                </button>
-                {toggleSortMenu && (
-                  <ul className="absolute right-0 top-8 border bg-white text-xs shadow-md">
-                    <li className="py-1.5 px-4 border-b border-gray-200 hover:bg-gray-100">
-                      <a
-                        onClick={() => sort("desc")}
-                        className="inline-block cursor-pointer"
-                      >
-                        Newset
-                      </a>
-                    </li>
-                    <li className="py-1.5 px-4 hover:bg-gray-100">
-                      <a
-                        onClick={() => sort("asc")}
-                        className="inline-block cursor-pointer"
-                      >
-                        Oldest
-                      </a>
-                    </li>
-                  </ul>
-                )}
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M16 7v10m0 0l3-3m-3 3l-3-3"
+                      />
+                    </svg>
+                  </button>
+                  {toggleSortMenu && (
+                    <ul
+                      id={sortMenuId}
+                      className="absolute right-0 top-8 border bg-white text-xs shadow-md"
+                    >
+                      <li className="py-1.5 px-4 border-b border-gray-200 hover:bg-gray-100">
+                        <button
+                          type="button"
+                          onClick={() => sort("desc")}
+                          className="inline-block cursor-pointer"
+                        >
+                          Newest
+                        </button>
+                      </li>
+                      <li className="py-1.5 px-4 hover:bg-gray-100">
+                        <button
+                          type="button"
+                          onClick={() => sort("asc")}
+                          className="inline-block cursor-pointer"
+                        >
+                          Oldest
+                        </button>
+                      </li>
+                    </ul>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -202,7 +282,7 @@ function Transactions() {
                         {filters[item]}
                       </button>
                     </li>
-                  )
+                  ),
               )}
             </ul>
           )}
@@ -263,6 +343,8 @@ function Transactions() {
                             onClick={() =>
                               navigate(`/transactions/edit/${item.id}`)
                             }
+                            type="button"
+                            aria-label={`Edit transaction ${item.description || item.category}`}
                           >
                             ✏️
                           </button>
@@ -272,6 +354,8 @@ function Transactions() {
                               dispatch(deleteTransaction(item.id));
                               deleteTransactions();
                             }}
+                            type="button"
+                            aria-label={`Delete transaction ${item.description || item.category}`}
                           >
                             ❌
                           </button>
@@ -300,12 +384,13 @@ function Transactions() {
           ) : (
             <p className="flex justify-center items-center p-16 text-sm">
               No results found.
-              <a
+              <button
+                type="button"
                 className="text-pink-700 font-medium inline-block ml-1 text-sm"
                 onClick={() => setToggleFilterMenu(true)}
               >
                 Adjust filters
-              </a>
+              </button>
             </p>
           )}
           {showLoading && (

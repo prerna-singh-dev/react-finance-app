@@ -13,18 +13,28 @@ function Dashboard() {
       <PageHeader
         heading="Transactions overview"
         subHeading="Dashboard"
-        image="budget.png"
+        image="/budget.png"
       >
         <p className="mt-1 text-sm text-slate-600">
           Track your income, expenses, and financial health in one place.
-          <br />
           Analyze spending patterns and trends with clear insights.
         </p>
       </PageHeader>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center">
-          <img src="income.png" alt="" className="w-14 inline-block my-2" />
+      <section
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        aria-label="Summary statistics"
+      >
+        <article
+          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center"
+          aria-label="Income summary"
+        >
+          <img
+            src="income.png"
+            alt=""
+            aria-hidden="true"
+            className="w-14 inline-block my-2"
+          />
 
           <div className="mt-2 text-2xl font-semibold text-slate-900 my-2">
             &#8377;{salary ? salary : 0}
@@ -32,9 +42,17 @@ function Dashboard() {
           <div className="text-sm text-slate-400 uppercase font-bold tracking-widest">
             Income
           </div>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center">
-          <img src="saving.png" alt="" className="w-14 inline-block my-2" />
+        </article>
+        <article
+          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center"
+          aria-label="Balance summary"
+        >
+          <img
+            src="saving.png"
+            alt=""
+            aria-hidden="true"
+            className="w-14 inline-block my-2"
+          />
 
           <div className="mt-2 text-2xl font-semibold text-emerald-600 my-2">
             &#8377;{balance ? balance : 0}
@@ -42,9 +60,17 @@ function Dashboard() {
           <div className="text-sm text-slate-400 uppercase font-bold tracking-widest">
             Balance
           </div>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center">
-          <img src="expense.png" alt="" className="w-14 inline-block my-2" />
+        </article>
+        <article
+          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center"
+          aria-label="Expense summary"
+        >
+          <img
+            src="expense.png"
+            alt=""
+            aria-hidden="true"
+            className="w-14 inline-block my-2"
+          />
 
           <div className="mt-2 text-2xl font-semibold text-rose-600 my-2">
             &#8377;{expense ? expense : 0}
@@ -52,9 +78,17 @@ function Dashboard() {
           <div className="text-sm text-slate-400 uppercase font-bold tracking-widest">
             Expense
           </div>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center">
-          <img src="category.png" alt="" className="w-14 inline-block my-2" />
+        </article>
+        <article
+          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center"
+          aria-label="Categories summary"
+        >
+          <img
+            src="category.png"
+            alt=""
+            aria-hidden="true"
+            className="w-14 inline-block my-2"
+          />
 
           <div className="mt-2 text-2xl font-semibold text-slate-900 my-2">
             {category ? category?.length : 0}
@@ -62,14 +96,25 @@ function Dashboard() {
           <div className="text-sm text-slate-400 uppercase font-bold tracking-widest">
             Categories
           </div>
-        </div>
+        </article>
       </section>
 
-      <section className="grid grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-2xl">
+      <section
+        className="grid md:grid-cols-3 grid-cols-1 gap-4"
+        aria-label="Charts"
+      >
+        <div
+          className="bg-white p-4 rounded-2xl"
+          role="region"
+          aria-label="Expenses by category chart"
+        >
           <ExpenseDoughnut />
         </div>
-        <div className="bg-white p-4  col-span-2 rounded-2xl">
+        <div
+          className="bg-white p-4  md:col-span-2 col-span-1 rounded-2xl"
+          role="region"
+          aria-label="Income versus expense chart"
+        >
           <IncomeVsExpenseChart />
         </div>
       </section>

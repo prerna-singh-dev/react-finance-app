@@ -7,15 +7,28 @@
   body,
   #root {
     height: 100%;
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
     position: relative;
+    background-color: #6e0e36;
   }
 }
 /* Custom radio button */
 .customField input:checked + span {
   background-color: #be185d;
   color: white;
+}
+
+@media only screen and (max-width: 768px) {
+  td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+    margin-right: 0.5rem;
+    width: 100px;
+  }
 }

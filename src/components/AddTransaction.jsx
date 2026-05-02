@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   addTransaction,
@@ -7,19 +7,22 @@ import {
 import useFetchExpenses from "../hooks/useFetchExpenses";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import PageHeader from "./PageHeader";
+import GlobalModal from "./GlobalModal";
 
 function AddTransaction() {
   const categories = useSelector((state) => state.category.list);
   const transactions = useSelector((state) => state.transaction.list);
 
-  const [categoryList, setCategoryList] = useState(categories);
   const [error, setError] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successModalPhase, setSuccessModalPhase] = useState("idle");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const params = useParams();
+  const isEditMode = Boolean(params.id);
 
   const [salary, expense, balance] = useFetchExpenses();
-  const params = useParams();
   const todayDate = new Date().toISOString().split("T")[0];
   let transactionForEdit = {};
 
@@ -28,7 +31,7 @@ function AddTransaction() {
   }
 
   const [inputValues, setInputValues] = useState(
-    params.id
+    params.id && transactionForEdit
       ? {
           amount: transactionForEdit.amount,
           type: transactionForEdit.type,
@@ -42,34 +45,31 @@ function AddTransaction() {
           category: "",
           date: "",
           description: "",
-        }
+        },
   );
 
+  const categoryList = useMemo(() => {
+    const list = Array.isArray(categories) ? categories : [];
+    if (!inputValues.type) return list;
+    return list.filter((item) => item.type === inputValues.type);
+  }, [categories, inputValues.type]);
+
   useEffect(() => {
-    const list = categories.filter(
-      (item) => item.type === transactionForEdit.type
-    );
-    setCategoryList(list);
-  }, []);
+    if (!showSuccessModal || successModalPhase !== "loading") return;
+    const t = setTimeout(() => setSuccessModalPhase("done"), 900);
+    return () => clearTimeout(t);
+  }, [showSuccessModal, successModalPhase]);
 
   const handleInputChange = (e) => {
     let inputNam = e.target.name;
     let inputVal = e.target.value;
 
-    if (inputNam === "type") {
-      let list = categories.filter((item) => item.type === inputVal);
-      setCategoryList(list);
-    }
     if (inputNam === "amount")
       inputVal = inputVal === "" ? "" : Number(inputVal);
 
     setInputValues((prev) => ({ ...prev, [inputNam]: inputVal }));
 
-    if (inputVal !== "") {
-      setError("");
-    } else {
-      setError("Please fill all fields");
-    }
+    setError("");
   };
 
   const resetFields = () => {
@@ -84,7 +84,7 @@ function AddTransaction() {
 
   const saveDetails = () => {
     const isFormInputEmpty = Object.values(inputValues).some(
-      (item) => !item || (typeof item === "string" && item.trim() === "")
+      (item) => !item || (typeof item === "string" && item.trim() === ""),
     );
     if (isFormInputEmpty) {
       setError("Please fill all the fields");
@@ -93,12 +93,32 @@ function AddTransaction() {
 
       if (params.id) {
         dispatch(editTransaction({ id: params.id, ...inputValues }));
+        resetFields();
+        setSuccessModalPhase("loading");
+        setShowSuccessModal(true);
       } else {
         dispatch(addTransaction(inputValues));
+        resetFields();
+        setSuccessModalPhase("loading");
+        setShowSuccessModal(true);
       }
-
-      navigate("/transactions/list");
     }
+  };
+
+  const closeSuccessGoToList = () => {
+    setShowSuccessModal(false);
+    setSuccessModalPhase("idle");
+    navigate("/transactions/list");
+  };
+
+  const closeSuccessStay = () => {
+    setShowSuccessModal(false);
+    setSuccessModalPhase("idle");
+  };
+
+  const dismissSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSuccessModalPhase("idle");
   };
 
   return (
@@ -106,29 +126,28 @@ function AddTransaction() {
       <PageHeader
         heading="Record new entry"
         subHeading="Transaction"
-        image="transfer.png"
+        image="/transfer.png"
       >
         <p className="mt-1 text-sm text-slate-600">
-          Add a new income or expense to keep your records updated.
-          <br />
-          Maintain accurate and organized financial data.
+          Add a new income or expense to keep your records updated. Maintain
+          accurate and organized financial data.
         </p>
       </PageHeader>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border bg-gradient-to-bl from-pink-50 to-pink-200 p-4 shadow-sm">
           <div className="text-sm text-slate-600">Salary</div>
           <div className="mt-2 text-2xl font-semibold text-slate-900">
             &#8377;{salary ? salary : 0}
           </div>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-gradient-to-bl from-pink-50 to-pink-200 p-4 shadow-sm">
           <div className="text-sm text-slate-600">Balance</div>
           <div className="mt-2 text-2xl font-semibold text-emerald-600">
             &#8377;{balance ? balance : 0}
           </div>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-gradient-to-bl from-pink-50 to-pink-200 p-4 shadow-sm">
           <div className="text-sm text-slate-600">Expense</div>
           <div className="mt-2 text-2xl font-semibold text-rose-600">
             &#8377;{expense ? expense : 0}
@@ -145,10 +164,10 @@ function AddTransaction() {
           </div>
 
           <form
-            className="space-y-4 p-4 w-3/4"
+            className="space-y-4 p-4 w-full md:w-3/4"
             onSubmit={(e) => e.preventDefault()}
           >
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
               <div>
                 <label
                   htmlFor="amount"
@@ -187,7 +206,7 @@ function AddTransaction() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
               <div>
                 <label
                   htmlFor="type"
@@ -263,7 +282,14 @@ function AddTransaction() {
               />
             </div>
             {error && (
-              <p className="text-rose-500 text-xs font-bold"> {error}</p>
+              <p
+                className="text-rose-500 text-xs font-bold"
+                role="alert"
+                aria-live="polite"
+              >
+                {" "}
+                {error}
+              </p>
             )}
             <div className="flex items-center gap-2">
               <button
@@ -288,6 +314,66 @@ function AddTransaction() {
           </form>
         </div>
       </div>
+
+      {showSuccessModal && (
+        <GlobalModal
+          ariaLabel={
+            successModalPhase === "loading"
+              ? "Saving transaction"
+              : "Transaction saved"
+          }
+          ariaBusy={successModalPhase === "loading"}
+          onClose={dismissSuccessModal}
+        >
+          {successModalPhase === "loading" ? (
+            <div className="flex flex-col items-center justify-center py-4">
+              <img
+                src="/transfer.png"
+                alt=""
+                className="mx-auto h-20 w-auto animate-pulse drop-shadow-sm"
+              />
+              <div
+                className="mt-5 h-9 w-9 rounded-full border-2 border-pink-100 border-t-pink-700 animate-spin"
+                aria-hidden="true"
+              />
+              <p className="mt-5 text-sm font-medium text-slate-700">
+                Saving your transaction…
+              </p>
+              <p className="mt-1 text-xs text-slate-500">Just a moment</p>
+            </div>
+          ) : (
+            <>
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-600">
+                ✓
+              </div>
+              <h2 className="text-center text-lg font-semibold text-slate-900">
+                All set
+              </h2>
+              <p className="mt-2 text-center text-sm text-slate-600">
+                {isEditMode
+                  ? "Your transaction was updated successfully."
+                  : "Your transaction was added successfully."}
+              </p>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                <button
+                  type="button"
+                  onClick={closeSuccessGoToList}
+                  className="inline-flex h-11 cursor-pointer items-center justify-center rounded-xl bg-pink-700 px-5 text-sm font-medium text-white shadow-sm transition hover:bg-pink-600"
+                >
+                  View all transactions
+                </button>
+                <button
+                  type="button"
+                  onClick={closeSuccessStay}
+                  className="inline-flex h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                  {isEditMode ? "Continue here" : "Add another entry"}
+                </button>
+              </div>
+            </>
+          )}
+        </GlobalModal>
+      )}
     </section>
   );
 }

@@ -6,7 +6,7 @@ const initialState = {
     maxAmount: "",
     type: "",
     category: [],
-    month: "",
+    date: "",
   },
 };
 
@@ -20,26 +20,29 @@ const filterSlice = createSlice({
         maxAmount,
         type,
         category,
-        month = "",
+        date = "",
       } = action.payload;
-      (state.options = {
+      ((state.options = {
         minAmount,
         maxAmount,
         type,
         category,
-        month,
+        date,
       }),
-        sessionStorage.setItem("appliedFilters", JSON.stringify(state.options));
+        sessionStorage.setItem(
+          "appliedFilters",
+          JSON.stringify(state.options),
+        ));
     },
     resetFilters: (state) => {
-      (state.options = {
+      ((state.options = {
         minAmount: "",
         maxAmount: "",
         type: "",
         category: [],
-        month: "",
+        date: "",
       }),
-        sessionStorage.removeItem("appliedFilters");
+        sessionStorage.removeItem("appliedFilters"));
     },
   },
 });

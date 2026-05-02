@@ -20,41 +20,54 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+
+/** "2025-12-01" -> "2025-12" (avoids mixing December last year with December this year). */
+function yearMonthKey(dateStr) {
+  if (typeof dateStr === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr.slice(0, 7);
+  }
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** 12 month buckets ending this month: each slot is one real calendar month + year. */
+function last12MonthKeysAndLabels() {
+  const now = new Date();
+  const keys = [];
+  const labels = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    keys.push(key);
+    labels.push(
+      d.toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
+    );
+  }
+  return { keys, labels };
+}
+
 function IncomeVsExpenseChart() {
   const transactions = useSelector((state) => state.transaction.list);
-  let monthlyIncome = {};
-  let monthlyExpense = {};
-  const currentMonth = new Date().getMonth();
-  const monthLabels = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "Sepetember",
-    "October",
-    "Novemeber",
-    "December",
-  ].slice(0, currentMonth + 1);
+  const { keys, labels } = last12MonthKeysAndLabels();
+  const keySet = new Set(keys);
+  const monthlyIncome = Object.fromEntries(keys.map((k) => [k, 0]));
+  const monthlyExpense = Object.fromEntries(keys.map((k) => [k, 0]));
 
-  transactions.forEach((item) => {
-    const month = monthLabels[new Date(item.date).getMonth()];
-
+  (Array.isArray(transactions) ? transactions : []).forEach((item) => {
+    const key = yearMonthKey(item.date);
+    if (!key || !keySet.has(key)) return;
+    const amount = Number(item.amount);
+    if (Number.isNaN(amount)) return;
     if (item.type === "Income") {
-      monthlyIncome[month] = monthlyIncome[month] + item.amount || item.amount;
-    } else {
-      monthlyExpense[month] =
-        monthlyExpense[month] + item.amount || item.amount;
+      monthlyIncome[key] += amount;
+    } else if (item.type === "Expense") {
+      monthlyExpense[key] += amount;
     }
   });
 
-  const monthlyIncomeMap = monthLabels.map((item) => monthlyIncome[item] || 0);
-  const monthlyExpenseMap = monthLabels.map(
-    (item) => monthlyExpense[item] || 0
-  );
+  const monthlyIncomeMap = keys.map((k) => monthlyIncome[k]);
+  const monthlyExpenseMap = keys.map((k) => monthlyExpense[k]);
 
   const options = {
     responsive: true,
@@ -64,13 +77,13 @@ function IncomeVsExpenseChart() {
       },
       title: {
         display: true,
-        text: "Income vs Expense Trend over months",
+        text: "Income vs Expense (last 12 months, by month and year)",
       },
     },
   };
 
   const chartData = {
-    labels: monthLabels,
+    labels,
     datasets: [
       {
         label: "Income",
